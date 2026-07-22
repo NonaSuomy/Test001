@@ -1,4 +1,4 @@
-name: Deploy Web App
+name: Deploy Pages
 
 on:
   push:
@@ -6,43 +6,96 @@ on:
       - main
 
 permissions:
-  contents: read
   pages: write
   id-token: write
+  contents: read
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - run: git lfs pull
+
+      - run: |
+          mkdir publish
+          cp -R * publish/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: publish
+
   deploy:
+    needs: build
+
+    runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - id: deployment
+        uses: actions/deploy-pages@v4name: Deploy Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  pages: write
+  id-token: write
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
         with:
-          lfs: true # Installs LFS on the runner
+          lfs: true
 
-      # FORCE THE RUNNER TO FETCH THE RAW BINARIES
-      - name: Fetch LFS Objects
-        run: |
-          git lfs install --local
-          AUTH=$(git config --local http.${{ github.server_url }}/.extraheader)
-          git config --local --unset http.${{ github.server_url }}/.extraheader
-          git config --local http.${{ github.server_url }}/${{ github.repository }}.git/info/lfs/objects/batch.extraheader "$AUTH"
-          git lfs pull
+      - run: git lfs pull
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+      - run: |
+          mkdir publish
+          cp -R * publish/
 
-      - name: Upload Artifacts
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.' 
+          path: publish
 
-      - name: Deploy to GitHub Pages
-        id: deployment
+  deploy:
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - id: deployment
         uses: actions/deploy-pages@v4
