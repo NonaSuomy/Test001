@@ -1,4 +1,4 @@
-name: Deploy Pages
+kkname: Deploy Web App
 
 on:
   push:
@@ -6,96 +6,36 @@ on:
       - main
 
 permissions:
+  contents: read
   pages: write
   id-token: write
-  contents: read
 
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - run: git lfs pull
-
-      - run: |
-          mkdir publish
-          cp -R * publish/
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: publish
-
   deploy:
-    needs: build
-
-    runs-on: ubuntu-latest
-
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
-    permissions:
-      pages: write
-      id-token: write
-
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4name: Deploy Pages
-
-on:
-  push:
-    branches:
-      - main
-
-permissions:
-  pages: write
-  id-token: write
-  contents: read
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
-jobs:
-  build:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
           lfs: true
+          token: ${{ secrets.GITHUB_TOKEN }} # Explicitly authorizes downloading LFS binaries
 
-      - run: git lfs pull
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
-      - run: |
-          mkdir publish
-          cp -R * publish/
-
-      - uses: actions/upload-pages-artifact@v3
+      - name: Upload Artifacts
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: publish
+          path: '.' 
 
-  deploy:
-    needs: build
-
-    runs-on: ubuntu-latest
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    permissions:
-      pages: write
-      id-token: write
-
-    steps:
-      - id: deployment
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
+
