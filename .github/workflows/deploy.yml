@@ -24,7 +24,16 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          lfs: true # Forces GitHub to download the real 163MB zip file
+          lfs: true # Installs LFS on the runner
+
+      # FORCE THE RUNNER TO FETCH THE RAW BINARIES
+      - name: Fetch LFS Objects
+        run: |
+          git lfs install --local
+          AUTH=$(git config --local http.${{ github.server_url }}/.extraheader)
+          git config --local --unset http.${{ github.server_url }}/.extraheader
+          git config --local http.${{ github.server_url }}/${{ github.repository }}.git/info/lfs/objects/batch.extraheader "$AUTH"
+          git lfs pull
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -32,7 +41,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.' # Serves your root folder containing index.html, boxedwine.zip, etc.
+          path: '.' 
 
       - name: Deploy to GitHub Pages
         id: deployment
