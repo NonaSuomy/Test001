@@ -1,4 +1,4 @@
-kkname: Deploy Web App
+name: Deploy Web App
 
 on:
   push:
